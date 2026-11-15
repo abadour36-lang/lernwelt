@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App-Symbol: gelbes Feld mit Buch -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFCA28" android:pathData="M20,8 L88,8 Q100,8 100,20 L100,88 Q100,100 88,100 L20,100 Q8,100 8,88 L8,20 Q8,8 20,8 Z" />
+    <path android:fillColor="#1E88E5" android:pathData="M54,34 Q40,26 24,30 L24,78 Q40,74 54,82 Z" />
+    <path android:fillColor="#43A047" android:pathData="M54,34 Q68,26 84,30 L84,78 Q68,74 54,82 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M30,40 L48,43 L48,46 L30,43 Z M30,50 L48,53 L48,56 L30,53 Z M60,43 L78,40 L78,43 L60,46 Z M60,53 L78,50 L78,53 L60,56 Z" />
+</vector>

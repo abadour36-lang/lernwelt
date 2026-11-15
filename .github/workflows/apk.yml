@@ -1,0 +1,30 @@
+# Baut die Android-App auf den Rechnern von GitHub und stellt sie als Download bereit.
+name: APK bauen
+on:
+  push:
+    paths: ['android/**', '.github/workflows/apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: APK bauen
+        working-directory: android
+        run: gradle assembleDebug --no-daemon
+      - name: Als Download bereitstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk lernwelt.apk
+          gh release delete apk --yes --cleanup-tag || true
+          gh release create apk lernwelt.apk --title "Lernwelt App" --notes "Android-App für das Kinder-Tablet"

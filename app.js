@@ -20,7 +20,10 @@ function ladeStimmen() { try { stimmen = speechSynthesis.getVoices() || []; } ca
 if ('speechSynthesis' in window) { ladeStimmen(); try { speechSynthesis.onvoiceschanged = ladeStimmen; } catch (e) {} }
 function sprich(text, lang) {
   lang = lang || 'de-DE';
-  if (!text || !('speechSynthesis' in window)) return;
+  if (!text) return;
+  // In der Tablet-App liest die Stimme des Tablets vor (Android-Hülle stellt "Vorleser" bereit)
+  if (window.Vorleser) { try { window.Vorleser.sprich(String(text), lang, S.tempo); } catch (e) {} return; }
+  if (!('speechSynthesis' in window)) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -52,7 +55,7 @@ const TON_RICHTIG = [[660, .12], [880, .22]], TON_FALSCH = [[240, .25]], TON_JUB
 // ---------- Ablauf ----------
 let uhrwerk = [];
 function spaeter(fn, ms) { uhrwerk.push(setTimeout(fn, ms)); }
-function stoppeAlles() { uhrwerk.forEach(clearTimeout); uhrwerk = []; try { speechSynthesis.cancel(); } catch (e) {} }
+function stoppeAlles() { uhrwerk.forEach(clearTimeout); uhrwerk = []; try { if (window.Vorleser) window.Vorleser.stopp(); else speechSynthesis.cancel(); } catch (e) {} }
 
 function kopf(titel) {
   if (titel !== undefined) $('#titel').textContent = titel;
@@ -663,7 +666,7 @@ function eltern() {
     '<label>Zahlenraum ab Stufe 3: <select id="raum">' + [20, 50, 100].map(z => '<option' + (z === S.zahlenraum ? ' selected' : '') + '>' + z + '</option>').join('') + '</select></label>' +
     '<label>Sprechtempo: <input type="range" id="tempo" min="0.6" max="1.2" step="0.05" value="' + S.tempo + '"></label>' +
     '<label>Stimme: <select id="stimme"><option value="">automatisch</option>' + de.map(v => '<option' + (v.name === S.stimme ? ' selected' : '') + '>' + v.name + '</option>').join('') + '</select> <button class="knopf" id="test">🔊 Test</button></label>' +
-    (de.length ? '' : '<p style="color:#c62828">Keine deutsche Stimme gefunden. Auf dem Tablet: Einstellungen › Bedienungshilfen › Text-in-Sprache, deutsche Sprache laden.</p>') +
+    (de.length || window.Vorleser ? '' : '<p style="color:#c62828">Keine deutsche Stimme gefunden. Auf dem Tablet: Einstellungen › Bedienungshilfen › Text-in-Sprache, deutsche Sprache laden.</p>') +
     '<p>Gesamt gesammelt: ⭐ ' + S.sterne + ' · Kontostand: ⭐ ' + S.konto + '</p>' +
     '<h3>Fortschritt</h3><table><tr><th>Übung</th><th>richtig</th><th>falsch</th><th>Stufe</th></tr>' + (zeilen || '<tr><td colspan="4">noch nichts geübt</td></tr>') + '</table><br>' +
     '<div class="knoepfe"><button class="knopf" id="stufen">Stufen zurücksetzen</button><button class="knopf" id="alles">Alles zurücksetzen</button><button class="knopf gruen" id="fertig">✅ Speichern</button></div></div>', null, null, start);
