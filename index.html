@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#ffca28">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>Lernwelt</title>
+<style>
+  :root { --bg:#fff8e7; --karte:#fff; --text:#2b2b2b; --gruen:#43a047; --rot:#e53935; --blau:#1e88e5; --gelb:#ffca28; --schatten:0 5px 0 rgba(0,0,0,.15); }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; height:100%; }
+  body { font-family:"Andika","Comic Sans MS","Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); user-select:none; -webkit-user-select:none; touch-action:manipulation; overflow-x:hidden; }
+  header { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--gelb); font-weight:bold; font-size:clamp(18px,3.2vmin,26px); box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  header #titel { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ziel { width:clamp(60px,14vw,160px); height:14px; background:#fff8; border-radius:8px; overflow:hidden; }
+  .ziel i { display:block; height:100%; width:0; background:var(--gruen); transition:width .4s; }
+  main { max-width:1100px; margin:0 auto; padding:12px 16px 24px; }
+  button { font:inherit; color:inherit; border:none; border-radius:18px; cursor:pointer; touch-action:manipulation; }
+  button:disabled { opacity:.45; }
+  .rund { width:56px; height:56px; border-radius:50%; background:#fff; font-size:26px; box-shadow:var(--schatten); flex:none; }
+  .werkzeug { display:flex; justify-content:space-between; margin-bottom:6px; }
+  .gruss { display:flex; align-items:center; gap:12px; font-size:clamp(22px,4.5vmin,34px); margin:4px 0 14px; }
+  .gruss .maskottchen { font-size:clamp(48px,10vmin,80px); }
+  .raster { display:grid; grid-template-columns:repeat(auto-fill,minmax(clamp(130px,22vw,190px),1fr)); gap:14px; }
+  .kachel { background:var(--karte); padding:16px 8px; font-size:clamp(17px,3vmin,22px); box-shadow:var(--schatten); line-height:1.2; }
+  .kachel .em { display:block; font-size:clamp(40px,9vmin,64px); margin-bottom:6px; }
+  .kachel small { display:block; font-size:14px; opacity:.6; margin-top:4px; }
+  .eltern-knopf { display:block; margin:26px auto 0; background:#e0e0e0; padding:10px 18px; font-size:16px; }
+  .fortschritt { display:flex; justify-content:center; gap:6px; margin:0 0 4px; }
+  .fortschritt i { width:14px; height:14px; border-radius:50%; background:#ddd; }
+  .fortschritt i.an { background:var(--gruen); }
+  .frage { text-align:center; margin:6px 0; min-height:clamp(80px,22vmin,200px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+  .text { font-size:clamp(22px,4.5vmin,34px); }
+  .gross { font-size:clamp(48px,12vmin,96px); font-weight:bold; }
+  .bildgross { font-size:clamp(70px,20vmin,150px); line-height:1; }
+  .bildgross .svgbild { width:clamp(80px,22vmin,170px); height:clamp(80px,22vmin,170px); }
+  .emoji { line-height:1; }
+  .svgbild { width:1.1em; height:1.1em; vertical-align:middle; }
+  .lob { text-align:center; font-size:clamp(22px,4.5vmin,34px); min-height:1.4em; }
+  .antworten { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .antworten.zwei { grid-template-columns:1fr 1fr; }
+  .antworten.drei { grid-template-columns:repeat(3,1fr); }
+  @media (orientation:landscape) { .antworten { grid-template-columns:repeat(4,1fr); } .antworten.drei { grid-template-columns:repeat(3,1fr); } .antworten.zwei { grid-template-columns:1fr 1fr; } }
+  .antwort { background:var(--blau); color:#fff; font-size:clamp(26px,6vmin,52px); min-height:clamp(70px,16vmin,130px); padding:8px; box-shadow:var(--schatten); display:flex; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .antwort .emoji, .antwort .svgbild { font-size:clamp(48px,11vmin,90px); }
+  .antwort.bild { background:#fff; }
+  .antwort.richtig { background:var(--gruen) !important; color:#fff; }
+  .antwort.falsch { background:var(--rot) !important; }
+  .antwort.zeigen { animation:puls .8s infinite; outline:5px solid var(--gruen); }
+  @keyframes puls { 50% { transform:scale(1.06); } }
+  .buchstabe { font-size:clamp(40px,10vmin,80px); font-weight:bold; }
+  .lesewort { font-size:clamp(46px,11vmin,90px); font-weight:bold; letter-spacing:.06em; background:#fff; padding:6px 28px; border-radius:18px; box-shadow:var(--schatten); }
+  .lesewort.klein { font-size:clamp(28px,6vmin,46px); }
+  .menge { display:grid; grid-template-columns:repeat(5,auto); gap:4px 10px; font-size:clamp(30px,7vmin,52px); justify-content:center; }
+  .menge.klein { display:inline-grid; font-size:clamp(22px,5vmin,36px); }
+  .menge .weg { opacity:.35; text-decoration:line-through; filter:grayscale(1); }
+  .rechenbild { display:flex; align-items:center; gap:14px; font-size:30px; }
+  .reihe { display:flex; gap:12px; }
+  .reihe b { background:#fff; border-radius:14px; padding:6px 18px; font-size:clamp(34px,8vmin,64px); box-shadow:var(--schatten); }
+  .reihe .luecke { background:#ffe082; }
+  .farbklecks { display:inline-block; width:clamp(56px,13vmin,100px); height:clamp(56px,13vmin,100px); border-radius:50%; border:3px solid #0003; }
+  .uhr { width:clamp(150px,36vmin,300px); height:clamp(150px,36vmin,300px); }
+  .uhr text { font-family:sans-serif; }
+  /* Nachspuren */
+  .spur-titel { text-align:center; font-size:clamp(28px,6vmin,46px); font-weight:bold; letter-spacing:.08em; }
+  .spur-titel .jetzt { color:var(--blau); text-decoration:underline; }
+  .spur-titel .fertig { color:var(--gruen); }
+  .spur { position:relative; margin:6px auto; width:min(92vw, calc(100vh - 290px), 560px); height:min(92vw, calc(100vh - 290px), 560px); background:#fff; border-radius:24px; box-shadow:var(--schatten); }
+  .spur svg, .spur canvas { position:absolute; inset:0; width:100%; height:100%; }
+  .spur canvas { touch-action:none; }
+  .spur-pfad { fill:none; stroke:#cfd8dc; stroke-width:12; stroke-linecap:round; stroke-linejoin:round; }
+  .geschafft .spur-pfad { stroke:#a5d6a7; }
+  .demo-pfad { fill:none; stroke:#ff9800; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
+  .hilfslinie { stroke:#90caf9; stroke-width:.6; }
+  .hilfslinie.gestrichelt { stroke-dasharray:3 3; }
+  .startpunkt circle { fill:#43a047; }
+  .startpunkt text { fill:#fff; font-size:6px; font-weight:bold; font-family:sans-serif; }
+  .knoepfe { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .knopf { background:#fff; padding:12px 20px; font-size:clamp(18px,3.5vmin,26px); box-shadow:var(--schatten); }
+  .knopf.blau { background:var(--blau); color:#fff; }
+  .knopf.gruen { background:var(--gruen); color:#fff; }
+  /* Legen */
+  .slots { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin:10px 0 18px; }
+  .slot { width:clamp(40px,9vmin,72px); height:clamp(54px,12vmin,92px); border-bottom:5px solid #555; font-size:clamp(34px,8vmin,64px); font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  .slot em { font-style:normal; color:#ccc; }
+  .slot.voll { color:var(--gruen); }
+  .steine { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .stein { width:clamp(54px,11vmin,86px); height:clamp(54px,11vmin,86px); background:#ffe082; font-size:clamp(30px,7vmin,54px); font-weight:bold; box-shadow:var(--schatten); }
+  .stein.weg { visibility:hidden; }
+  .wackeln { animation:wackeln .4s; }
+  @keyframes wackeln { 25% { transform:translateX(-8px); } 75% { transform:translateX(8px); } }
+  /* Karten */
+  .karte { margin:10px auto; width:min(90vw,520px); background:#fff; border-radius:24px; box-shadow:var(--schatten); text-align:center; padding:20px; }
+  .karte .bildgross { margin-bottom:10px; }
+  .karte .wort { font-size:clamp(32px,7vmin,56px); font-weight:bold; }
+  .karte .wort small { font-size:.6em; color:#888; }
+  /* Malen */
+  .palette { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:8px; }
+  .palette button { width:44px; height:44px; border-radius:50%; border:3px solid #0002; }
+  .palette button.an { outline:4px solid #333; }
+  #malflaeche { display:block; margin:0 auto; background:#fff; border-radius:18px; box-shadow:var(--schatten); touch-action:none; }
+  /* Kamil */
+  .buehne { text-align:center; }
+  .kamil { display:inline-block; position:relative; font-size:clamp(110px,28vmin,200px); line-height:1; }
+  .kamil .sachen { position:absolute; left:0; right:0; top:-.25em; font-size:.35em; }
+  .huepfen { animation:huepfen .6s 2; }
+  @keyframes huepfen { 50% { transform:translateY(-30px) rotate(-6deg); } }
+  .blase { display:inline-block; background:#fff; border-radius:18px; padding:10px 18px; font-size:clamp(18px,4vmin,28px); box-shadow:var(--schatten); margin:8px; }
+  .laden { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px; }
+  .laden button { background:#fff; padding:10px; font-size:18px; box-shadow:var(--schatten); }
+  .laden button .em { font-size:44px; display:block; }
+  .laden button.an { outline:4px solid var(--gruen); }
+  /* Hinweis, Eltern */
+  #hinweis { position:fixed; left:50%; top:80px; transform:translateX(-50%) scale(0); background:#fff; padding:14px 26px; border-radius:20px; font-size:26px; box-shadow:0 6px 20px rgba(0,0,0,.25); transition:transform .25s; z-index:9; text-align:center; }
+  #hinweis.an { transform:translateX(-50%) scale(1); }
+  .eltern { background:#fff; border-radius:18px; padding:16px; font-size:18px; box-shadow:var(--schatten); }
+  .eltern label { display:block; margin:12px 0; }
+  .eltern input, .eltern select { font:inherit; padding:6px 10px; border-radius:10px; border:2px solid #ccc; }
+  .eltern table { border-collapse:collapse; width:100%; font-size:15px; }
+  .eltern td, .eltern th { border-bottom:1px solid #eee; padding:4px; text-align:left; }
+  .tasten { display:grid; grid-template-columns:repeat(3,80px); gap:10px; justify-content:center; margin:14px 0; }
+  .tasten button { height:64px; background:#fff; font-size:28px; box-shadow:var(--schatten); }
+  .ende { text-align:center; padding-top:20px; }
+  .ende .em { font-size:clamp(90px,24vmin,180px); }
+</style>
+</head>
+<body>
+<header><button class="rund" id="heim" aria-label="Start">🏠</button><span id="titel">Lernwelt</span><span class="ziel" title="Tagesziel"><i id="ziel"></i></span><span id="sterne">⭐ 0</span></header>
+<main id="app"></main>
+<div id="hinweis"></div>
+<script src="inhalte.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
