@@ -18,20 +18,26 @@ function sichern() { try { localStorage.setItem('lernwelt', JSON.stringify(S)); 
 let stimmen = [];
 function ladeStimmen() { try { stimmen = speechSynthesis.getVoices() || []; } catch (e) {} }
 if ('speechSynthesis' in window) { ladeStimmen(); try { speechSynthesis.onvoiceschanged = ladeStimmen; } catch (e) {} }
+// Weibliche Stimmen zuerst (Namensteile bekannter Frauenstimmen)
+const WEIBLICH = /marlene|vicki|anna|petra|katja|amala|helena|hedda|eva|kerstin|ramona|sabine|seraphina|female|google deutsch|-dea|-deb|-nfh/i;
+function sortiereStimmen(kurz) {
+  return stimmen.filter(x => (x.lang || '').replace('_', '-').toLowerCase().indexOf(kurz) === 0)
+    .sort((a, b) => (WEIBLICH.test(b.name) - WEIBLICH.test(a.name)) || (/natural|neural|online/i.test(b.name) - /natural|neural|online/i.test(a.name)));
+}
 function sprich(text, lang) {
   lang = lang || 'de-DE';
   if (!text) return;
   // In der Tablet-App liest die Stimme des Tablets vor (Android-Hülle stellt "Vorleser" bereit)
-  if (window.Vorleser) { try { window.Vorleser.sprich(String(text), lang, S.tempo); } catch (e) {} return; }
+  if (window.Vorleser) { try { if (window.Vorleser.stimme) window.Vorleser.stimme(S.stimme || ''); window.Vorleser.sprich(String(text), lang, S.tempo); } catch (e) {} return; }
   if (!('speechSynthesis' in window)) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang; u.rate = S.tempo;
+    u.lang = lang; u.rate = S.tempo; u.pitch = 1.1;
     const kurz = lang.slice(0, 2);
     let v = null;
     if (kurz === 'de' && S.stimme) v = stimmen.find(x => x.name === S.stimme);
-    if (!v) v = stimmen.find(x => (x.lang || '').replace('_', '-').toLowerCase().indexOf(kurz) === 0);
+    if (!v) v = sortiereStimmen(kurz)[0];
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   } catch (e) {}
@@ -658,14 +664,15 @@ function elternTor() {
 function eltern() {
   kopf('Eltern-Bereich');
   ladeStimmen();
-  const de = stimmen.filter(v => (v.lang || '').toLowerCase().indexOf('de') === 0);
+  let de = sortiereStimmen('de').map(v => v.name);
+  try { if (window.Vorleser && window.Vorleser.stimmen) de = JSON.parse(window.Vorleser.stimmen()); } catch (e) {}
   const zeilen = Object.keys(S.statistik).map(k => { const s = S.statistik[k]; return '<tr><td>' + (SPIEL_NAMEN[k] || k) + '</td><td>' + s.r + '</td><td>' + s.f + '</td><td>' + stufe(k) + '</td></tr>'; }).join('');
   zeige('<div class="eltern"><h2>👪 Eltern-Bereich</h2>' +
     '<label>Name: <input id="nm" value="' + S.name.replace(/"/g, '') + '" maxlength="20"></label>' +
     '<label>Tagesziel (Sterne): <select id="ziel">' + [10, 15, 20, 30, 50].map(z => '<option' + (z === S.tagesziel ? ' selected' : '') + '>' + z + '</option>').join('') + '</select></label>' +
     '<label>Zahlenraum ab Stufe 3: <select id="raum">' + [20, 50, 100].map(z => '<option' + (z === S.zahlenraum ? ' selected' : '') + '>' + z + '</option>').join('') + '</select></label>' +
     '<label>Sprechtempo: <input type="range" id="tempo" min="0.6" max="1.2" step="0.05" value="' + S.tempo + '"></label>' +
-    '<label>Stimme: <select id="stimme"><option value="">automatisch</option>' + de.map(v => '<option' + (v.name === S.stimme ? ' selected' : '') + '>' + v.name + '</option>').join('') + '</select> <button class="knopf" id="test">🔊 Test</button></label>' +
+    '<label>Stimme: <select id="stimme"><option value="">automatisch (Frauenstimme)</option>' + de.map(n => '<option' + (n === S.stimme ? ' selected' : '') + '>' + n + '</option>').join('') + '</select> <button class="knopf" id="test">🔊 Test</button></label>' +
     (de.length || window.Vorleser ? '' : '<p style="color:#c62828">Keine deutsche Stimme gefunden. Auf dem Tablet: Einstellungen › Bedienungshilfen › Text-in-Sprache, deutsche Sprache laden.</p>') +
     '<p>Gesamt gesammelt: ⭐ ' + S.sterne + ' · Kontostand: ⭐ ' + S.konto + '</p>' +
     '<h3>Fortschritt</h3><table><tr><th>Übung</th><th>richtig</th><th>falsch</th><th>Stufe</th></tr>' + (zeilen || '<tr><td colspan="4">noch nichts geübt</td></tr>') + '</table><br>' +
