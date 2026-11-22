@@ -24,9 +24,45 @@ function sortiereStimmen(kurz) {
   return stimmen.filter(x => (x.lang || '').replace('_', '-').toLowerCase().indexOf(kurz) === 0)
     .sort((a, b) => (WEIBLICH.test(b.name) - WEIBLICH.test(a.name)) || (/natural|neural|online/i.test(b.name) - /natural|neural|online/i.test(a.name)));
 }
+// Aufgenommene Stimme (Kerstin): ganze Sätze oder aus Bausteinen zusammengesetzt; fehlt etwas, liest das Tablet vor
+let TONINDEX = null, tonLauf = 0, tonJetzt = null;
+try { fetch('ton/index.json').then(r => r.ok ? r.json() : null).then(j => { TONINDEX = j; }).catch(() => {}); } catch (e) {}
+function tonFolge(text) {
+  if (!TONINDEX) return null;
+  const folge = [];
+  for (const satz of (String(text).match(/[^.!?]+[.!?]*/g) || []).map(x => x.trim()).filter(Boolean)) {
+    if (TONINDEX.s[satz] !== undefined) { folge.push(TONINDEX.s[satz]); continue; }
+    const w = satz.split(/\s+/);
+    for (let i = 0; i < w.length;) {
+      let n = Math.min(4, w.length - i), id;
+      for (; n > 1; n--) { const g = w.slice(i, i + n).join(' '); id = TONINDEX.s[g] !== undefined ? TONINDEX.s[g] : TONINDEX.s[g.replace(/[.!?,:]+$/, '')]; if (id !== undefined) break; }
+      if (n === 1) id = TONINDEX.w[w[i].toLowerCase().replace(/[^a-zäöüß0-9]/g, '')];
+      if (id === undefined) { if (!w[i].replace(/[^a-zäöüß0-9]/gi, '')) { i++; continue; } return null; }
+      folge.push(id); i += n;
+    }
+  }
+  return folge.length ? folge : null;
+}
+function tonStopp() { tonLauf++; if (tonJetzt) { try { tonJetzt.pause(); } catch (e) {} tonJetzt = null; } }
+function tonSpielen(folge, text) {
+  tonStopp(); const lauf = tonLauf;
+  const stuecke = folge.map(id => { const a = new Audio('ton/' + id + '.mp3'); a.preload = 'auto'; a.playbackRate = S.tempo / 0.85; return a; });
+  let i = 0;
+  const weiter = () => {
+    if (lauf !== tonLauf || i >= stuecke.length) return;
+    tonJetzt = stuecke[i++]; tonJetzt.onended = weiter;
+    tonJetzt.play().catch(() => { if (lauf === tonLauf) { tonLauf++; sprichTablet(text, 'de-DE'); } });
+  };
+  weiter();
+}
 function sprich(text, lang) {
   lang = lang || 'de-DE';
   if (!text) return;
+  if (lang.indexOf('de') === 0) { const f = tonFolge(text); if (f) { try { if (window.Vorleser) window.Vorleser.stopp(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} tonSpielen(f, String(text)); return; } }
+  tonStopp();
+  sprichTablet(text, lang);
+}
+function sprichTablet(text, lang) {
   // In der Tablet-App liest die Stimme des Tablets vor (Android-Hülle stellt "Vorleser" bereit)
   if (window.Vorleser) { try { if (window.Vorleser.stimme) window.Vorleser.stimme(S.stimme || ''); window.Vorleser.sprich(String(text), lang, S.tempo); } catch (e) {} return; }
   if (!('speechSynthesis' in window)) return;
@@ -61,7 +97,7 @@ const TON_RICHTIG = [[660, .12], [880, .22]], TON_FALSCH = [[240, .25]], TON_JUB
 // ---------- Ablauf ----------
 let uhrwerk = [];
 function spaeter(fn, ms) { uhrwerk.push(setTimeout(fn, ms)); }
-function stoppeAlles() { uhrwerk.forEach(clearTimeout); uhrwerk = []; try { if (window.Vorleser) window.Vorleser.stopp(); else speechSynthesis.cancel(); } catch (e) {} }
+function stoppeAlles() { uhrwerk.forEach(clearTimeout); uhrwerk = []; tonStopp(); try { if (window.Vorleser) window.Vorleser.stopp(); else speechSynthesis.cancel(); } catch (e) {} }
 
 function kopf(titel) {
   if (titel !== undefined) $('#titel').textContent = titel;
